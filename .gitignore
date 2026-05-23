@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Databases
+*.db
+*.sqlite
+
+# Storage — never commit user data
+storage/uploads/
+storage/screenshots/
+storage/memory-db/
+storage/session-db/
+storage/video-db/
+storage/videos/
+storage/exports/
+storage/video-thumbs/
+storage/cameras/
+
+# AI model files — large binaries, never commit
+*.pt
+*.onnx
+*.gguf
+*.bin
+models/
+.cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Security
+*.key
+*.pem
+*.cert

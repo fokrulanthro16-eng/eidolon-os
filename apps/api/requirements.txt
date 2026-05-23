@@ -1,0 +1,39 @@
+# EIDOLON OS — Python dependencies
+# Install: pip install -r requirements.txt
+
+# ── Core (required) ────────────────────────────────────────────────────────
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+pillow
+mss                        # fast cross-monitor screenshot capture (Windows/Linux/macOS)
+
+# ── Optional: PDF text extraction (Phase 7 — PDF Brain) ────────────────────
+# Enables POST /memory/ingest-pdf with full text extraction.
+# Also enables OCR of scanned PDF pages (when Tesseract is also installed).
+# pip install pymupdf
+
+# ── Optional: OCR ──────────────────────────────────────────────────────────
+# Uncomment + install the Tesseract binary to enable text extraction from screenshots
+# and scanned PDF pages.
+# Tesseract binary: https://github.com/UB-Mannheim/tesseract/wiki
+# Windows default: C:\Program Files\Tesseract-OCR\tesseract.exe
+# pip install pytesseract
+
+# ── Optional: Semantic search ──────────────────────────────────────────────
+# Uncomment to upgrade from keyword-only to hybrid semantic search.
+# Downloads ~90 MB model (all-MiniLM-L6-v2) on first use; works fully offline.
+# pip install sentence-transformers
+
+# ── Optional: Voice transcription (Phase 9 — Voice Memory) ─────────────────
+# Enables POST /memory/ingest-audio with local Whisper transcription.
+# CPU-optimized (int8 quantised). Downloads ~145 MB base model on first use.
+# pip install faster-whisper
+
+# ── Optional: Video Intelligence (Phase 10 — Video Intelligence Core) ───────
+# Enables POST /video/upload with YOLO nano object detection + motion analysis.
+# YOLO nano model (~6 MB) downloads automatically on first video analysis.
+# numpy is usually already present; opencv-python-headless is the headless build
+# (no GUI dependencies — safe for server use on Windows).
+# pip install opencv-python-headless ultralytics numpy

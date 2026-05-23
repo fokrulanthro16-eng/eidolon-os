@@ -1,0 +1,52 @@
+# ── EIDOLON OS — Python 3.12 venv (workers + full stack) ──────────────────────
+# Install inside: .venv-312\Scripts\activate
+#
+# IMPORTANT: PaddlePaddle has NO Python 3.14 wheels.
+# Run all workers in this 3.12 venv.
+# Create: py -3.12 -m venv .venv-312
+
+# ── Core API ──────────────────────────────────────────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.17
+websockets==14.1
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0          # async PostgreSQL driver
+alembic==1.14.0
+
+# ── Task Queue ────────────────────────────────────────────────────────────────
+celery==5.4.0
+redis==5.2.1
+# Windows: celery must run with --pool=solo or --pool=threads
+# Production Linux: remove that flag
+
+# ── Embeddings ────────────────────────────────────────────────────────────────
+sentence-transformers==3.3.1
+# BGE-M3 downloads automatically on first use (~570MB)
+
+# ── OCR ───────────────────────────────────────────────────────────────────────
+paddlepaddle==2.6.2       # CPU version — GPU: paddlepaddle-gpu==2.6.2.post120
+paddleocr==2.9.1
+
+# ── Screen Capture ────────────────────────────────────────────────────────────
+mss==9.0.2
+pywin32==308              # Windows only
+psutil==6.1.1             # process name for window tracker
+
+# ── Image Processing ─────────────────────────────────────────────────────────
+pillow==11.0.0
+opencv-python-headless==4.10.0.84
+
+# ── Text Processing ───────────────────────────────────────────────────────────
+tiktoken==0.8.0
+
+# ── HTTP (Ollama REST calls) ──────────────────────────────────────────────────
+httpx==0.28.1
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+pydantic==2.10.3
+pydantic-settings==2.6.1
+aiofiles==24.1.0

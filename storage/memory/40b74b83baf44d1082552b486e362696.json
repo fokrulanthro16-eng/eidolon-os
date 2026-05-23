@@ -1,0 +1,16 @@
+{
+  "id": "40b74b83baf44d1082552b486e362696",
+  "created_at": "2026-05-21T23:39:28.344411Z",
+  "source_type": "upload",
+  "file_path": "uploads\\40b74b83baf44d1082552b486e362696_test_capture.png",
+  "ocr_text": "[OCR unavailable] Image: 40b74b83baf44d1082552b486e362696_test_capture.png | Size: 600x200px | Format: PNG | Mode: RGB",
+  "summary": null,
+  "tags": [],
+  "source_app": "VSCode",
+  "window_title": "main.py - EIDOLON OS",
+  "metadata": {
+    "original_filename": "test_capture.png",
+    "content_type": "image/png",
+    "size_bytes": 5295
+  }
+}
