@@ -2343,6 +2343,7 @@ export default function Dashboard() {
   const [screenWatchRunning, setScreenWatchRunning] = useState(false)
   const [demoBannerOpen,    setDemoBannerOpen]     = useState(true)
   const [showDemoChecklist, setShowDemoChecklist]  = useState(false)
+  const [showAboutDialog,   setShowAboutDialog]    = useState(false)
 
   // ── Phase 13: Replay 2.0 ─────────────────────────────────
   const [replayTab, setReplayTab]             = useState<'day' | 'topic' | 'modality'>('day')
@@ -3201,13 +3202,13 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* ── Demo Banner (Phase 24) ── */}
+      {/* ── RC Banner (Phase 25) ── */}
       {demoBannerOpen && (
         <div style={{
           margin: '14px 28px 0',
           padding: '14px 20px',
-          background: 'rgba(0,180,255,0.04)',
-          border: '1px solid rgba(0,180,255,0.18)',
+          background: 'linear-gradient(90deg, rgba(16,217,132,0.05) 0%, rgba(0,180,255,0.05) 100%)',
+          border: '1px solid rgba(16,217,132,0.25)',
           borderRadius: '12px',
           display: 'flex',
           alignItems: 'center',
@@ -3215,12 +3216,16 @@ export default function Dashboard() {
           flexWrap: 'wrap' as const,
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' as const }}>
-              <span style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--blue)', fontFamily: 'var(--font-geist-mono, monospace)' }}>
-                EIDOLON OS
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' as const }}>
+              <span style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--emerald)', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                EIDOLON OS v0.25.0 RC
               </span>
-              <span style={{ fontSize: '11px', color: 'var(--text-3)' }}>
-                Local-First AI Cognitive Operating System
+              <span style={{
+                fontSize: '9px', padding: '2px 8px', borderRadius: '4px',
+                background: 'rgba(16,217,132,0.15)', border: '1px solid rgba(16,217,132,0.4)',
+                color: 'var(--emerald)', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em',
+              }}>
+                COMPETITION READY
               </span>
               <span style={{ fontSize: '10px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)' }}>
                 Capture → Remember → Understand → Assist
@@ -3228,27 +3233,39 @@ export default function Dashboard() {
             </div>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginTop: '8px' }}>
               {[
-                { label: '⬡ Local Memory',    color: 'rgba(16,217,132,0.12)',  border: 'rgba(16,217,132,0.3)',  text: 'var(--emerald)' },
-                { label: '⬡ Gemini Hybrid',   color: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)', text: 'var(--violet)' },
-                { label: '◈ Privacy First',   color: 'rgba(0,180,255,0.08)',  border: 'rgba(0,180,255,0.25)', text: 'var(--blue)' },
-                { label: '◉ Vision/CCTV',     color: 'rgba(255,140,90,0.08)', border: 'rgba(255,140,90,0.25)', text: 'var(--orange)' },
-                { label: '◫ Identity Engine', color: 'rgba(234,179,8,0.08)',  border: 'rgba(234,179,8,0.25)', text: '#eab308' },
+                { label: '⬡ Local Memory',    color: 'rgba(16,217,132,0.10)', border: 'rgba(16,217,132,0.25)', text: 'var(--emerald)' },
+                { label: '⬡ Gemini Hybrid',   color: 'rgba(139,92,246,0.10)', border: 'rgba(139,92,246,0.25)', text: 'var(--violet)' },
+                { label: '◈ Privacy First',   color: 'rgba(0,180,255,0.07)',  border: 'rgba(0,180,255,0.2)',  text: 'var(--blue)' },
+                { label: '◉ Vision/CCTV',     color: 'rgba(255,140,90,0.07)', border: 'rgba(255,140,90,0.2)', text: 'var(--orange)' },
+                { label: '◫ Identity Engine', color: 'rgba(234,179,8,0.07)',  border: 'rgba(234,179,8,0.2)',  text: '#eab308' },
               ].map(b => (
                 <span key={b.label} style={{
                   fontSize: '9px', padding: '2px 8px', borderRadius: '4px',
                   background: b.color, border: `1px solid ${b.border}`, color: b.text,
-                  fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.05em',
+                  fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.04em',
                 }}>
                   {b.label}
                 </span>
               ))}
             </div>
           </div>
-          <button
-            onClick={() => setDemoBannerOpen(false)}
-            style={{ background: 'none', border: 'none', color: 'var(--text-4)', cursor: 'pointer', fontSize: '16px', padding: '0 4px', flexShrink: 0 }}
-            title="Dismiss"
-          >×</button>
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            <button
+              onClick={() => setShowAboutDialog(true)}
+              style={{
+                padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '10px',
+                background: 'rgba(0,180,255,0.07)', border: '1px solid rgba(0,180,255,0.2)',
+                color: 'var(--blue)', fontFamily: 'var(--font-geist-mono, monospace)',
+              }}
+            >
+              ◈ About
+            </button>
+            <button
+              onClick={() => setDemoBannerOpen(false)}
+              style={{ background: 'none', border: 'none', color: 'var(--text-4)', cursor: 'pointer', fontSize: '16px', padding: '0 4px' }}
+              title="Dismiss"
+            >×</button>
+          </div>
         </div>
       )}
 
@@ -3534,6 +3551,45 @@ export default function Dashboard() {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Judge Quick Facts (Phase 25) ── */}
+        {activeTab === 'timeline' && (
+          <div style={{
+            marginBottom: '20px',
+            padding: '14px 18px',
+            background: 'rgba(139,92,246,0.03)',
+            border: '1px solid rgba(139,92,246,0.14)',
+            borderRadius: '12px',
+          }}>
+            <div style={{ fontSize: '10px', fontFamily: 'var(--font-geist-mono, monospace)', color: 'var(--violet)', letterSpacing: '0.12em', marginBottom: '10px' }}>
+              ◈ JUDGE QUICK FACTS
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
+              {([
+                { icon: '⬡', label: 'Local AI',        detail: 'All processing on-device. Zero mandatory cloud.' },
+                { icon: '◉', label: 'Vision/CCTV',     detail: 'YOLO nano object detection. No cloud vision API.' },
+                { icon: '◎', label: 'Voice',            detail: 'Local Whisper transcription. Fully offline.' },
+                { icon: '◫', label: 'PDF Brain',        detail: 'Semantic chunking + local Q&A.' },
+                { icon: '◈', label: 'Memory Graph',     detail: 'Temporal relationship graph across all memories.' },
+                { icon: '◫', label: 'Identity Engine',  detail: 'Detects projects, infers goals, answers "Who am I?"' },
+                { icon: '⬡', label: 'Gemini Hybrid',   detail: 'Opt-in Gemini 2.0 Flash. Local fallback always active.' },
+              ] as const).map(f => (
+                <div
+                  key={f.label}
+                  title={f.detail}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '5px',
+                    padding: '4px 10px', borderRadius: '6px', cursor: 'default',
+                    background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)',
+                  }}
+                >
+                  <span style={{ fontSize: '11px', color: 'var(--violet)', opacity: 0.8 }}>{f.icon}</span>
+                  <span style={{ fontSize: '10px', color: 'var(--text-2)', fontFamily: 'var(--font-geist-mono, monospace)' }}>{f.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -5828,6 +5884,105 @@ export default function Dashboard() {
             target={pdfChatTarget}
             onClose={() => setPdfChatTarget(null)}
           />
+        </>
+      )}
+
+      {/* ── Footer Status Strip (Phase 25) ── */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20,
+        padding: '6px 28px',
+        background: 'rgba(4,4,16,0.92)',
+        backdropFilter: 'blur(12px)',
+        borderTop: '1px solid rgba(0,212,255,0.08)',
+        display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' as const,
+      }}>
+        {([
+          { label: 'MEMORIES',      value: String(count),                                       color: 'var(--blue)' },
+          { label: 'SESSIONS',      value: String(sessions.length),                             color: 'var(--cyan)' },
+          { label: 'GEMINI',        value: brainStatus?.llm_active ? 'ACTIVE' : 'LOCAL',        color: brainStatus?.llm_active ? 'var(--emerald)' : '#eab308' },
+          { label: 'VISION',        value: cameraRunning ? 'ACTIVE' : 'STANDBY',                color: cameraRunning ? 'var(--emerald)' : 'var(--text-4)' },
+          { label: 'LOCAL-FIRST',   value: 'ALWAYS ON',                                         color: 'var(--emerald)' },
+        ] as const).map(s => (
+          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{ fontSize: '8px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em' }}>{s.label}</span>
+            <span style={{ fontSize: '9px', color: s.color, fontFamily: 'var(--font-geist-mono, monospace)', fontWeight: 700 }}>{s.value}</span>
+          </div>
+        ))}
+        <span style={{ flex: 1 }} />
+        <span style={{ fontSize: '8px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+          EIDOLON OS v0.25.0 RC · Google AI First Challenge 2026
+        </span>
+      </div>
+
+      {/* ── About Dialog (Phase 25) ── */}
+      {showAboutDialog && (
+        <>
+          <div
+            onClick={() => setShowAboutDialog(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200 }}
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+            zIndex: 201, width: '520px', maxWidth: 'calc(100vw - 48px)',
+            background: '#06061a', border: '1px solid rgba(0,180,255,0.25)',
+            borderRadius: '16px', padding: '28px 28px 24px',
+            display: 'flex', flexDirection: 'column' as const, gap: '20px',
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: '16px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--blue)', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                  EIDOLON OS
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '3px' }}>
+                  Local-First AI Cognitive Operating System · v0.25.0 RC
+                </div>
+              </div>
+              <button onClick={() => setShowAboutDialog(false)} style={{ background: 'none', border: 'none', color: 'var(--text-4)', cursor: 'pointer', fontSize: '18px', padding: '0' }}>×</button>
+            </div>
+
+            {/* What is it */}
+            <div>
+              <div style={{ fontSize: '9px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.12em', marginBottom: '6px' }}>WHAT IS EIDOLON OS</div>
+              <p style={{ fontSize: '12px', color: 'var(--text-2)', lineHeight: 1.7, margin: 0 }}>
+                EIDOLON OS is an open-source AI cognitive operating system that captures everything you do — screenshots, documents, audio, video, camera feeds — and makes it all searchable, replayable, and intelligently reasoned. It runs fully offline by default and optionally upgrades to Google Gemini for natural-language synthesis.
+              </p>
+            </div>
+
+            {/* Key technologies */}
+            <div>
+              <div style={{ fontSize: '9px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.12em', marginBottom: '8px' }}>KEY TECHNOLOGIES</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
+                {['Python 3.12 + FastAPI', 'Next.js 16 + React 19', 'Gemini 2.0 Flash (opt-in)', 'YOLOv8 nano', 'faster-whisper', 'sentence-transformers', 'PyMuPDF', 'Tesseract OCR'].map(t => (
+                  <span key={t} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(0,180,255,0.06)', border: '1px solid rgba(0,180,255,0.15)', color: 'var(--blue)', fontFamily: 'var(--font-geist-mono, monospace)' }}>{t}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Privacy */}
+            <div>
+              <div style={{ fontSize: '9px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.12em', marginBottom: '6px' }}>PRIVACY-FIRST ARCHITECTURE</div>
+              <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '4px' }}>
+                {[
+                  '✓  All data stored locally in storage/ — you own it completely',
+                  '✓  OCR, voice, vision, search — all run on-device',
+                  '✓  Gemini is opt-in — disabled by default, zero-config mode works',
+                  '✓  No telemetry, no analytics, no account required',
+                  '✓  GEMINI_ALLOW_SYSTEM_LOCKDOWN=true prevents any cloud context',
+                ].map(line => (
+                  <div key={line} style={{ fontSize: '11px', color: 'var(--text-3)', fontFamily: 'var(--font-geist-mono, monospace)' }}>{line}</div>
+                ))}
+              </div>
+            </div>
+
+            {/* Local-first philosophy */}
+            <div style={{ padding: '10px 14px', background: 'rgba(16,217,132,0.04)', border: '1px solid rgba(16,217,132,0.15)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '9px', color: 'var(--emerald)', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.12em', marginBottom: '5px' }}>LOCAL-FIRST PHILOSOPHY</div>
+              <p style={{ fontSize: '11px', color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
+                Every feature in EIDOLON OS has a working offline path. Gemini enhances but never replaces local intelligence. If the API is unreachable, local semantic fallback answers automatically. The Cognitive Core Orb always tells you exactly which mode is active.
+              </p>
+            </div>
+          </div>
         </>
       )}
 
