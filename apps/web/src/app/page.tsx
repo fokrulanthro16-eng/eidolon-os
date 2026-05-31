@@ -1929,10 +1929,11 @@ function ChatPanel() {
   }
 
   const PROMPTS = [
-    'What was I building yesterday?',
-    'Summarize my coding work',
-    'What was I researching?',
-    'What project am I working on?',
+    'Who am I?',
+    'What am I building?',
+    'What are my active projects?',
+    'What should I work on next?',
+    'What changed this week?',
   ]
 
   const hasMessages = messages.length > 0
@@ -1982,6 +1983,37 @@ function ChatPanel() {
           display: 'flex',
           flexDirection: 'column',
         }}>
+          {/* ── Quick question chips — always visible at top ── */}
+          {!hasMessages && (
+            <div style={{
+              padding: '10px 16px 8px',
+              borderBottom: '1px solid #0c1e38',
+              display: 'flex', gap: '6px', flexWrap: 'wrap' as const,
+            }}>
+              {PROMPTS.map(p => (
+                <button
+                  key={p}
+                  onClick={() => { setInput(p); submit(p) }}
+                  disabled={streaming}
+                  style={{
+                    background: 'rgba(0,180,255,0.06)',
+                    border: '1px solid rgba(0,180,255,0.2)',
+                    color: '#00b4ff',
+                    fontSize: '10px',
+                    padding: '4px 10px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-geist-mono, monospace)',
+                    letterSpacing: '0.02em',
+                    transition: 'background 0.12s',
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Message history */}
           {hasMessages && (
             <div style={{
@@ -2027,48 +2059,25 @@ function ChatPanel() {
             />
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-              {/* Example prompts / new chat */}
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, flex: 1 }}>
-                {!hasMessages
-                  ? PROMPTS.map(p => (
-                      <button
-                        key={p}
-                        onClick={() => { setInput(p); submit(p) }}
-                        disabled={streaming}
-                        style={{
-                          background: 'transparent',
-                          border: '1px solid #0e2040',
-                          color: '#2a5070',
-                          fontSize: '10px',
-                          padding: '3px 8px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontFamily: 'var(--font-geist-mono, monospace)',
-                        }}
-                      >
-                        {p}
-                      </button>
-                    ))
-                  : (
-                      <button
-                        onClick={newChat}
-                        style={{
-                          background: 'transparent',
-                          border: '1px solid #0e2040',
-                          color: '#2a5070',
-                          fontSize: '10px',
-                          padding: '3px 10px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontFamily: 'var(--font-geist-mono, monospace)',
-                        }}
-                      >
-                        ↺ New Chat
-                      </button>
-                    )
-                }
+              <div style={{ flex: 1 }}>
+                {hasMessages && (
+                  <button
+                    onClick={newChat}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #0e2040',
+                      color: '#2a5070',
+                      fontSize: '10px',
+                      padding: '3px 10px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-geist-mono, monospace)',
+                    }}
+                  >
+                    ↺ New Chat
+                  </button>
+                )}
               </div>
-
               <button
                 onClick={() => submit(input)}
                 disabled={streaming || !input.trim()}
@@ -2332,6 +2341,8 @@ export default function Dashboard() {
   const [workflowPeriods, setWorkflowPeriods] = useState<WorkflowPeriod[]>([])
   const [agentLoaded, setAgentLoaded]         = useState(false)
   const [screenWatchRunning, setScreenWatchRunning] = useState(false)
+  const [demoBannerOpen,    setDemoBannerOpen]     = useState(true)
+  const [showDemoChecklist, setShowDemoChecklist]  = useState(false)
 
   // ── Phase 13: Replay 2.0 ─────────────────────────────────
   const [replayTab, setReplayTab]             = useState<'day' | 'topic' | 'modality'>('day')
@@ -3110,7 +3121,7 @@ export default function Dashboard() {
             <span style={{ color: 'var(--text-3)' }}>OS</span>
           </h1>
           <p style={{ margin: 0 }} className="label-xs">
-            Local-First AI Cognitive OS · Phase 20
+            Local-First AI Cognitive Operating System · Phase 24
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -3189,6 +3200,57 @@ export default function Dashboard() {
           )}
         </div>
       </header>
+
+      {/* ── Demo Banner (Phase 24) ── */}
+      {demoBannerOpen && (
+        <div style={{
+          margin: '14px 28px 0',
+          padding: '14px 20px',
+          background: 'rgba(0,180,255,0.04)',
+          border: '1px solid rgba(0,180,255,0.18)',
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          flexWrap: 'wrap' as const,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' as const }}>
+              <span style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--blue)', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                EIDOLON OS
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--text-3)' }}>
+                Local-First AI Cognitive Operating System
+              </span>
+              <span style={{ fontSize: '10px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                Capture → Remember → Understand → Assist
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginTop: '8px' }}>
+              {[
+                { label: '⬡ Local Memory',    color: 'rgba(16,217,132,0.12)',  border: 'rgba(16,217,132,0.3)',  text: 'var(--emerald)' },
+                { label: '⬡ Gemini Hybrid',   color: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)', text: 'var(--violet)' },
+                { label: '◈ Privacy First',   color: 'rgba(0,180,255,0.08)',  border: 'rgba(0,180,255,0.25)', text: 'var(--blue)' },
+                { label: '◉ Vision/CCTV',     color: 'rgba(255,140,90,0.08)', border: 'rgba(255,140,90,0.25)', text: 'var(--orange)' },
+                { label: '◫ Identity Engine', color: 'rgba(234,179,8,0.08)',  border: 'rgba(234,179,8,0.25)', text: '#eab308' },
+              ].map(b => (
+                <span key={b.label} style={{
+                  fontSize: '9px', padding: '2px 8px', borderRadius: '4px',
+                  background: b.color, border: `1px solid ${b.border}`, color: b.text,
+                  fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.05em',
+                }}>
+                  {b.label}
+                </span>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={() => setDemoBannerOpen(false)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-4)', cursor: 'pointer', fontSize: '16px', padding: '0 4px', flexShrink: 0 }}
+            title="Dismiss"
+          >×</button>
+        </div>
+      )}
 
       {/* ── Search bar (Timeline only) ── */}
       {activeTab === 'timeline' && (
@@ -3429,6 +3491,53 @@ export default function Dashboard() {
       {/* ── Main content ── */}
       <main style={{ padding: '0 28px 48px' }}>
 
+        {/* ── Judge Walkthrough card (Phase 24) ── */}
+        {activeTab === 'timeline' && (
+          <div style={{
+            marginBottom: '20px',
+            padding: '14px 18px',
+            background: 'rgba(16,217,132,0.03)',
+            border: '1px solid rgba(16,217,132,0.14)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '16px',
+            flexWrap: 'wrap' as const,
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '10px', fontFamily: 'var(--font-geist-mono, monospace)', color: 'var(--emerald)', letterSpacing: '0.12em', marginBottom: '10px' }}>
+                ◈ 3-MINUTE DEMO FLOW
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
+                {([
+                  { n: '1', label: 'Capture Memory',   tab: 'timeline' as const },
+                  { n: '2', label: 'Ask Eidolon',       tab: 'timeline' as const },
+                  { n: '3', label: 'Open Profile',      tab: 'profile'  as const },
+                  { n: '4', label: 'Open Trends',       tab: 'trends'   as const },
+                  { n: '5', label: 'Open Agent',        tab: 'agent'    as const },
+                ] as const).map(step => (
+                  <button
+                    key={step.n}
+                    onClick={() => switchTab(step.tab)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      padding: '5px 12px', borderRadius: '6px', cursor: 'pointer',
+                      background: activeTab === step.tab ? 'rgba(16,217,132,0.12)' : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${activeTab === step.tab ? 'rgba(16,217,132,0.35)' : 'rgba(255,255,255,0.08)'}`,
+                      color: activeTab === step.tab ? 'var(--emerald)' : 'var(--text-3)',
+                      fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <span style={{ fontSize: '9px', opacity: 0.5 }}>{step.n}.</span>
+                    {step.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Timeline tab */}
         {activeTab === 'timeline' && (
           error && !loading ? (
@@ -3446,13 +3555,17 @@ export default function Dashboard() {
           ) : count === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">◈</div>
-              <div className="empty-title">{isSearch ? 'NO RESULTS FOUND' : 'NO MEMORIES STORED YET'}</div>
-              {isSearch && (
+              <div className="empty-title">{isSearch ? 'NO RESULTS FOUND' : 'NO MEMORIES CAPTURED YET'}</div>
+              {isSearch ? (
                 <div className="empty-sub">
                   Try a different term or{' '}
                   <button onClick={fetchTimeline} style={{ background: 'none', border: 'none', color: 'var(--blue)', cursor: 'pointer', fontSize: '12px', padding: 0 }}>
                     view all
                   </button>
+                </div>
+              ) : (
+                <div className="empty-sub">
+                  Start Screen Watch or Camera Monitoring to begin capturing memories.
                 </div>
               )}
             </div>
@@ -3576,7 +3689,7 @@ export default function Dashboard() {
                 {/* Narrative */}
                 {trendsData.narrative && (
                   <div style={{ background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.14)', borderRadius: '10px', padding: '14px 18px' }}>
-                    <div style={{ color: 'var(--cyan)', fontSize: '10px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em', marginBottom: '8px' }}>◷ TIMELINE ANALYSIS</div>
+                    <div style={{ color: 'var(--cyan)', fontSize: '10px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em', marginBottom: '8px' }}>◷ BEHAVIOR TRENDS</div>
                     <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7, margin: 0 }}>{trendsData.narrative}</p>
                   </div>
                 )}
@@ -3810,14 +3923,14 @@ export default function Dashboard() {
             {loadingCog ? (
               <div style={{ padding: '14px 18px', display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.14)', borderRadius: '10px' }}>
                 <span style={{ color: 'var(--violet)', fontSize: '16px', animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</span>
-                <span style={{ color: 'var(--text-3)', fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)' }}>SYNTHESISING COGNITIVE PROFILE…</span>
+                <span style={{ color: 'var(--text-3)', fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)' }}>SYNTHESISING IDENTITY PROFILE…</span>
               </div>
             ) : cogProfile ? (
               <>
                 {/* Gemini summary */}
                 <div style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.14)', borderRadius: '10px', padding: '16px 18px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' as const }}>
-                    <span style={{ color: 'var(--violet)', fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em' }}>◈ COGNITIVE PROFILE</span>
+                    <span style={{ color: 'var(--violet)', fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em' }}>◈ IDENTITY PROFILE</span>
                     {cogProfile.gemini_powered && (
                       <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontFamily: 'var(--font-geist-mono, monospace)' }}>⬡ Gemini</span>
                     )}
@@ -3895,7 +4008,7 @@ export default function Dashboard() {
                 )}
               </>
             ) : (
-              <button onClick={fetchCogProfile} className="btn-outline" style={{ alignSelf: 'flex-start' }}>Generate Cognitive Profile</button>
+              <button onClick={fetchCogProfile} className="btn-outline" style={{ alignSelf: 'flex-start' }}>Generate Identity Profile</button>
             )}
 
             {/* divider */}
@@ -5345,6 +5458,70 @@ export default function Dashboard() {
                 <button onClick={() => setAgentResult(null)} style={{ background: 'none', border: 'none', color: 'var(--text-4)', cursor: 'pointer', fontSize: '14px', padding: '0' }}>×</button>
               </div>
             )}
+
+            {/* ── Run Demo Walkthrough (Phase 24) ── */}
+            <div style={{
+              padding: '14px 18px',
+              background: 'rgba(16,217,132,0.04)',
+              border: '1px solid rgba(16,217,132,0.18)',
+              borderRadius: '12px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: showDemoChecklist ? '14px' : '0' }}>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)', color: 'var(--emerald)', letterSpacing: '0.1em' }}>
+                    ◈ 3-MINUTE DEMO WALKTHROUGH
+                  </span>
+                  <div style={{ fontSize: '10px', color: 'var(--text-4)', marginTop: '2px' }}>
+                    Step-by-step guide for judges and reviewers
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowDemoChecklist(v => !v)}
+                  style={{
+                    padding: '6px 14px', borderRadius: '7px', cursor: 'pointer', fontSize: '11px',
+                    background: showDemoChecklist ? 'rgba(16,217,132,0.12)' : 'rgba(16,217,132,0.06)',
+                    border: '1px solid rgba(16,217,132,0.3)', color: 'var(--emerald)',
+                    fontFamily: 'var(--font-geist-mono, monospace)',
+                  }}
+                >
+                  {showDemoChecklist ? '▲ Hide' : '▶ Run Demo Walkthrough'}
+                </button>
+              </div>
+              {showDemoChecklist && (
+                <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '8px' }}>
+                  {([
+                    { n: '1', label: 'Capture Memory',  detail: 'Start Screen Watch — a screenshot appears in the Timeline within 30s', tab: 'timeline' as const },
+                    { n: '2', label: 'Ask Eidolon',      detail: 'Type "What am I building?" — Gemini returns identity-grounded answer', tab: 'timeline' as const },
+                    { n: '3', label: 'Open Profile',     detail: 'See Identity Snapshot card, active projects, and Gemini cognitive summary', tab: 'profile'  as const },
+                    { n: '4', label: 'Open Trends',      detail: '14-day activity chart with Gemini narrative and domain trend arrows', tab: 'trends'   as const },
+                    { n: '5', label: 'Open Agent',       detail: 'Run "Summarize Today" — one-click AI action grounded in local memories', tab: 'agent'    as const },
+                  ] as const).map(step => (
+                    <button
+                      key={step.n}
+                      onClick={() => switchTab(step.tab)}
+                      style={{
+                        display: 'flex', alignItems: 'flex-start', gap: '12px',
+                        padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', textAlign: 'left' as const,
+                        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(16,217,132,0.1)',
+                        transition: 'all 0.15s', width: '100%',
+                      }}
+                    >
+                      <span style={{
+                        width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(16,217,132,0.12)', border: '1px solid rgba(16,217,132,0.3)',
+                        fontSize: '9px', color: 'var(--emerald)', fontFamily: 'var(--font-geist-mono, monospace)', fontWeight: 700,
+                      }}>{step.n}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-1)', fontWeight: 600 }}>{step.label}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-4)', marginTop: '2px' }}>{step.detail}</div>
+                      </div>
+                      <span style={{ fontSize: '10px', color: 'rgba(16,217,132,0.5)', flexShrink: 0, marginTop: '2px' }}>→</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Two-column layout: Actions + Summary */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
