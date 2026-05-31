@@ -54,6 +54,7 @@ ACTIVE_MODULES: list[str] = [
     "MultiCamera",          # Phase 16: named multi-camera registry + isolated workers
     "WorldModel",           # Phase 17: heuristic world-state from camera events
     "BrainRouter",          # Phase 18: optional local LLM adapter (Ollama / LM Studio)
+    "GeminiBridge",         # Phase 21: optional Gemini cloud adapter (free AI Studio key)
 ]
 
 # ---------------------------------------------------------------------------
@@ -71,6 +72,13 @@ OLLAMA_MODEL: str = os.environ.get("OLLAMA_MODEL", "qwen2.5:3b")
 BRAIN_PROVIDER: str    = os.environ.get("BRAIN_PROVIDER", "local_semantic")
 LMSTUDIO_BASE_URL: str = os.environ.get("LMSTUDIO_BASE_URL", "http://127.0.0.1:1234/v1")
 LMSTUDIO_MODEL: str    = os.environ.get("LMSTUDIO_MODEL", "local-model")
+
+# Phase 21 — Gemini Bridge (optional, free Google AI Studio key)
+GEMINI_API_KEY: str              = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL: str                = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_ALLOW_SYSTEM_LOCKDOWN: bool = (
+    os.environ.get("GEMINI_ALLOW_SYSTEM_LOCKDOWN", "false").lower() == "true"
+)
 
 # ---------------------------------------------------------------------------
 # Storage paths — all absolute, all Windows-safe via pathlib

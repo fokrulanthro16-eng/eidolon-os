@@ -1,21 +1,22 @@
 """
-Brain Router — Phase 18.
+Brain Router — Phase 18 / 21.
 
 Selects and caches the active brain based on the BRAIN_PROVIDER env var.
 
 BRAIN_PROVIDER=local_semantic  (default — always works, zero dependencies)
 BRAIN_PROVIDER=ollama          (probe Ollama; falls back to local_semantic)
 BRAIN_PROVIDER=lmstudio        (probe LM Studio; falls back to local_semantic)
+BRAIN_PROVIDER=gemini          (Phase 21: Google Gemini via free AI Studio key)
 
 The existing app.services.llm.get_brain() (used by /chat routes) is unchanged.
-This router is used only by the new /brain/* endpoints (Phase 18).
+This router is used only by the /brain/* endpoints.
 """
 
 import logging
 import os
 from typing import Any
 
-from app.services.llm.base import BaseBrain
+from app.services.llm.base import BaseBrain, BrainMode
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ _active_brain: BaseBrain | None = None
 
 
 def get_active_brain() -> BaseBrain:
-    """Return the Phase-18 brain singleton, selected by BRAIN_PROVIDER."""
+    """Return the active brain singleton, selected by BRAIN_PROVIDER."""
     global _active_brain
     if _active_brain is None:
         _active_brain = _build()
@@ -41,7 +42,17 @@ def _build() -> BaseBrain:
     provider = os.environ.get("BRAIN_PROVIDER", "local_semantic").lower().strip()
     logger.info("brain_router: BRAIN_PROVIDER=%s", provider)
 
-    if provider == "ollama":
+    if provider == "gemini":
+        try:
+            brain = _build_gemini_brain()
+            if brain is not None and brain.is_llm_active():
+                logger.info("brain_router: Gemini active")
+                return brain
+            logger.warning("brain_router: Gemini unavailable → local_semantic")
+        except Exception as exc:
+            logger.warning("brain_router: GeminiBrain failed (%s) → local_semantic", exc)
+
+    elif provider == "ollama":
         try:
             from app.services.llm.ollama_brain import OllamaBrain
             brain = OllamaBrain()
@@ -63,21 +74,61 @@ def _build() -> BaseBrain:
         except Exception as exc:
             logger.warning("brain_router: LMStudioBrain failed (%s) → local_semantic", exc)
 
-    # Default: local_semantic (always works)
+    # Default: local_semantic (always works, zero deps)
     from app.services.llm.local_brain import LocalBrain
     return LocalBrain()
 
 
+def _build_gemini_brain() -> BaseBrain | None:
+    """Wrap GeminiBridgeService in a BaseBrain adapter (shared singleton)."""
+    from app.services.gemini_bridge_service import get_gemini_service
+
+    svc = get_gemini_service()
+
+    class _GeminiBrain(BaseBrain):
+        """Thin BaseBrain adapter around GeminiBridgeService."""
+
+        def mode(self) -> BrainMode:
+            return BrainMode.REMOTE_LLM if svc.is_active() else BrainMode.LOCAL_SEMANTIC
+
+        def is_llm_active(self) -> bool:
+            return svc.is_active()
+
+        def generate_response(self, user_message, memories, context=None):
+            return svc.generate_response(user_message, memories, context)
+
+        def generate_with_history(self, user_message, context, history=None):
+            return svc.generate_with_history(user_message, context, history)
+
+        def generate_stream(self, user_message, context, history=None):
+            yield from svc.generate_stream(user_message, context, history)
+
+        def status(self) -> dict[str, Any]:
+            return svc.status()
+
+    return _GeminiBrain()
+
+
 def get_brain_status() -> dict[str, Any]:
-    """Return status dict for the active brain."""
-    brain = get_active_brain()
+    """Return status dict for the active brain, including orb_state for the frontend."""
+    brain    = get_active_brain()
     provider = os.environ.get("BRAIN_PROVIDER", "local_semantic").lower().strip()
+    llm_ok   = brain.is_llm_active()
+    fallback = provider != "local_semantic" and not llm_ok
+
+    # orb_state: green = LLM live, yellow = local/fallback, red = reserved for client
+    orb_state = "green" if llm_ok else "yellow"
+
     base: dict[str, Any] = {
-        "brain_provider":    provider,
-        "mode":              brain.mode().value,
-        "llm_active":        brain.is_llm_active(),
-        "fallback_used":     provider != "local_semantic" and not brain.is_llm_active(),
+        "brain_provider": provider,
+        "mode":           brain.mode().value,
+        "llm_active":     llm_ok,
+        "fallback_used":  fallback,
+        "orb_state":      orb_state,
     }
     if hasattr(brain, "status"):
         base.update(brain.status())
+        # Restore top-level fields that status() may have overwritten
+        base["brain_provider"] = provider
+        base["orb_state"]      = orb_state
     return base

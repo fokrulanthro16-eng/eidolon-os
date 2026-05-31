@@ -1,0 +1,25 @@
+{
+  "user_summary": "",
+  "gemini_powered": false,
+  "active_projects": [
+    {
+      "name": "Camera & Vision System",
+      "confidence": 0.78,
+      "status": "active",
+      "last_seen": "2026-05-31",
+      "days_inactive": 0.3,
+      "evidence_count": 5
+    }
+  ],
+  "current_focus": "Camera & Vision System",
+  "inferred_goals": [
+    "Implement camera monitoring & vision"
+  ],
+  "suggested_next": "Continue your active work on Camera & Vision System.",
+  "technical_domains": [
+    "Camera & Vision Systems"
+  ],
+  "confidence": 0.5,
+  "memory_count": 6,
+  "last_updated": "2026-05-31T13:13:14.577880+00:00"
+}

@@ -556,6 +556,29 @@ interface BrainStatus {
   error?:            string
 }
 
+// Phase 22 — Identity Engine
+interface IdentityProject {
+  name:          string
+  confidence:    number
+  status:        'active' | 'recent' | 'dormant'
+  last_seen:     string
+  days_inactive: number
+  evidence_count: number
+}
+
+interface IdentityProfile {
+  user_summary:      string
+  gemini_powered:    boolean
+  active_projects:   IdentityProject[]
+  current_focus:     string
+  inferred_goals:    string[]
+  suggested_next:    string
+  technical_domains: string[]
+  confidence:        number
+  memory_count:      number
+  last_updated:      string
+}
+
 // Phase 21 — Intelligence / Cognitive Profile
 interface IntelDomainScore {
   domain:     string
@@ -2286,6 +2309,11 @@ export default function Dashboard() {
   const [loadingProfile, setLoadingProfile]   = useState(false)
   const [profileLoaded, setProfileLoaded]     = useState(false)
 
+  // ── Identity Engine (Phase 22) ────────────────────────────
+  const [identityData, setIdentityData]       = useState<IdentityProfile | null>(null)
+  const [identityLoaded, setIdentityLoaded]   = useState(false)
+  const [loadingIdentity, setLoadingIdentity] = useState(false)
+
   // ── Intelligence / Cognitive Profile (Phase 21) ───────────
   const [cogProfile, setCogProfile]           = useState<CognitiveProfile | null>(null)
   const [cogLoaded, setCogLoaded]             = useState(false)
@@ -2425,8 +2453,9 @@ export default function Dashboard() {
     if (tab === 'videos'   && !videosLoaded)   fetchVideos()
     if (tab === 'videos')                      { fetchCameraStatus(); fetchMultiCameras(); fetchWorldState() }
     if (tab === 'graph'    && !graphLoaded)     fetchGraph()
-    if (tab === 'profile'  && !profileLoaded)  fetchProfile()
-    if (tab === 'profile'  && !cogLoaded)      fetchCogProfile()
+    if (tab === 'profile'  && !profileLoaded)   fetchProfile()
+    if (tab === 'profile'  && !cogLoaded)       fetchCogProfile()
+    if (tab === 'profile'  && !identityLoaded)  fetchIdentity()
     if (tab === 'trends'   && !trendsLoaded)   fetchTrends()
     if (tab === 'agent'    && !agentLoaded)     fetchAgentData()
     if (tab === 'soul'     && !soulLoaded)      fetchSoulData()
@@ -2440,8 +2469,9 @@ export default function Dashboard() {
     } else if (activeTab === 'graph') {
       setGraphLoaded(false); fetchGraph()
     } else if (activeTab === 'profile') {
-      setProfileLoaded(false); fetchProfile()
-      setCogLoaded(false); fetchCogProfile()
+      setProfileLoaded(false);  fetchProfile()
+      setCogLoaded(false);      fetchCogProfile()
+      setIdentityLoaded(false); fetchIdentity()
     } else if (activeTab === 'trends') {
       setTrendsLoaded(false); fetchTrends()
     } else {
@@ -2765,6 +2795,20 @@ export default function Dashboard() {
       setError(e instanceof Error ? e.message : 'Failed to load profile')
     } finally {
       setLoadingProfile(false)
+    }
+  }, [])
+
+  // ── Identity Engine (Phase 22) ────────────────────────────
+  const fetchIdentity = useCallback(async () => {
+    setLoadingIdentity(true)
+    try {
+      const res = await fetch(`${API_BASE}/identity/profile`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data: IdentityProfile = await res.json()
+      setIdentityData(data)
+      setIdentityLoaded(true)
+    } catch { /* non-critical */ } finally {
+      setLoadingIdentity(false)
     }
   }, [])
 
@@ -3639,6 +3683,128 @@ export default function Dashboard() {
         {/* Profile tab */}
         {activeTab === 'profile' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* ── Identity Snapshot (Phase 22) ── */}
+            {identityData && (
+              <div style={{ background: 'rgba(16,217,132,0.06)', border: '1px solid rgba(16,217,132,0.22)', borderRadius: '12px', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: 'var(--emerald)', fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em' }}>◈ IDENTITY SNAPSHOT</span>
+                  <span style={{ fontSize: '9px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', marginLeft: 'auto' }}>
+                    {Math.round(identityData.confidence * 100)}% confidence · {identityData.memory_count} memories
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                  {identityData.user_summary || 'You appear to be building a local-first AI cognitive system.'}
+                </p>
+                {identityData.technical_domains.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <span style={{ fontSize: '9px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em' }}>CURRENT FOCUS</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
+                      {identityData.technical_domains.slice(0, 4).map(d => (
+                        <span key={d} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(16,217,132,0.1)', border: '1px solid rgba(16,217,132,0.25)', color: 'var(--emerald)', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                          {d}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {identityData.active_projects.filter(p => p.status !== 'dormant').length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <span style={{ fontSize: '9px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em' }}>ACTIVE PROJECTS</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
+                      {identityData.active_projects.filter(p => p.status !== 'dormant').slice(0, 5).map(p => (
+                        <span key={p.name} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: p.status === 'active' ? 'rgba(16,217,132,0.08)' : 'rgba(234,179,8,0.08)', border: `1px solid ${p.status === 'active' ? 'rgba(16,217,132,0.25)' : 'rgba(234,179,8,0.25)'}`, color: p.status === 'active' ? 'var(--emerald)' : '#eab308', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                          {p.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Identity Engine (Phase 22) ── */}
+            {loadingIdentity ? (
+              <div style={{ padding: '12px 18px', display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(16,217,132,0.04)', border: '1px solid rgba(16,217,132,0.14)', borderRadius: '10px' }}>
+                <span style={{ color: 'var(--emerald)', fontSize: '16px', animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</span>
+                <span style={{ color: 'var(--text-3)', fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)' }}>BUILDING IDENTITY PROFILE…</span>
+              </div>
+            ) : identityData ? (
+              <div style={{ background: 'rgba(16,217,132,0.04)', border: '1px solid rgba(16,217,132,0.14)', borderRadius: '12px', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' as const }}>
+                  <span style={{ color: 'var(--emerald)', fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em' }}>◈ IDENTITY</span>
+                  {identityData.gemini_powered && (
+                    <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontFamily: 'var(--font-geist-mono, monospace)' }}>⬡ Gemini</span>
+                  )}
+                  <span style={{ fontSize: '9px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', marginLeft: 'auto' }}>
+                    {Math.round(identityData.confidence * 100)}% confidence · {identityData.memory_count} memories
+                  </span>
+                </div>
+
+                {/* User summary */}
+                {identityData.user_summary && (
+                  <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.75, margin: 0 }}>
+                    {identityData.user_summary}
+                  </p>
+                )}
+
+                {/* Projects + Focus two-col */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  {/* Active projects */}
+                  {identityData.active_projects.filter(p => p.status !== 'dormant').length > 0 && (
+                    <div>
+                      <div style={{ color: 'var(--text-4)', fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em', marginBottom: '8px' }}>ACTIVE PROJECTS</div>
+                      {identityData.active_projects.filter(p => p.status !== 'dormant').slice(0, 4).map(p => (
+                        <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
+                          <span style={{
+                            width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
+                            background: p.status === 'active' ? 'var(--emerald)' : '#eab308',
+                            boxShadow: p.status === 'active' ? '0 0 5px rgba(16,217,132,0.5)' : 'none',
+                          }} />
+                          <span style={{ fontSize: '12px', color: 'var(--text-1)', flex: 1 }}>{p.name}</span>
+                          <span style={{ fontSize: '8px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                            {Math.round(p.confidence * 100)}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Goals + Focus */}
+                  <div>
+                    {identityData.current_focus && (
+                      <>
+                        <div style={{ color: 'var(--text-4)', fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em', marginBottom: '6px' }}>CURRENT FOCUS</div>
+                        <div style={{ fontSize: '12px', color: 'var(--emerald)', marginBottom: '12px', fontWeight: 600 }}>{identityData.current_focus}</div>
+                      </>
+                    )}
+                    {identityData.inferred_goals.length > 0 && (
+                      <>
+                        <div style={{ color: 'var(--text-4)', fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em', marginBottom: '6px' }}>INFERRED GOALS</div>
+                        {identityData.inferred_goals.slice(0, 3).map(g => (
+                          <div key={g} style={{ fontSize: '11px', color: 'var(--text-3)', marginBottom: '4px', paddingLeft: '8px', borderLeft: '2px solid rgba(16,217,132,0.3)', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                            {g}
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Suggested next */}
+                {identityData.suggested_next && (
+                  <div style={{ padding: '10px 14px', background: 'rgba(16,217,132,0.06)', border: '1px solid rgba(16,217,132,0.18)', borderRadius: '7px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <span style={{ color: 'var(--emerald)', fontSize: '13px', flexShrink: 0 }}>→</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-2)', fontStyle: 'italic' }}>{identityData.suggested_next}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button onClick={fetchIdentity} className="btn-outline" style={{ alignSelf: 'flex-start' }}>
+                Build Identity Profile
+              </button>
+            )}
 
             {/* ── Cognitive Profile (Phase 21) ── */}
             {loadingCog ? (

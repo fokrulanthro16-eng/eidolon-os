@@ -37,3 +37,9 @@ mss                        # fast cross-monitor screenshot capture (Windows/Linu
 # numpy is usually already present; opencv-python-headless is the headless build
 # (no GUI dependencies — safe for server use on Windows).
 # pip install opencv-python-headless ultralytics numpy
+
+# ── Optional: Gemini Cloud Brain (Phase 21 — Gemini Bridge) ─────────────────
+# Enables BRAIN_PROVIDER=gemini using a free Google AI Studio key.
+# Zero local model download. Falls back to local_semantic if key is missing.
+# Get a free key: https://aistudio.google.com/app/apikey
+google-genai
