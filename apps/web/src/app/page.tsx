@@ -537,17 +537,95 @@ interface WorldState {
   disclaimer:            string
 }
 
-// Phase 18 — Brain Status
+// Phase 18 / 21 — Brain Status
 interface BrainStatus {
   brain_provider:    string
   mode:              string
   llm_active:        boolean
   fallback_used:     boolean
+  orb_state?:        'green' | 'yellow' | 'red'
+  quota_limited?:    boolean
+  retry_after_seconds?: number
   ollama_url?:       string
   ollama_model?:     string
   lmstudio_url?:     string
   lmstudio_model?:   string
   available_models?: string[]
+  model?:            string
+  lockdown?:         boolean
+  error?:            string
+}
+
+// Phase 21 — Intelligence / Cognitive Profile
+interface IntelDomainScore {
+  domain:     string
+  score:      number
+  percentage: number
+  count:      number
+  color:      string
+}
+
+interface IntelCluster {
+  name:         string
+  color:        string
+  count:        number
+  percentage:   number
+  recent_title: string
+}
+
+interface IntelTrendDomain {
+  domain:    string
+  color:     string
+  this_week: number
+  last_week: number
+  trend:     'rising' | 'falling' | 'stable' | 'new'
+  delta:     string
+}
+
+interface IntelDay {
+  date:    string
+  label:   string
+  count:   number
+  domains: Record<string, number>
+}
+
+interface IntelInsight {
+  type:  string
+  title: string
+  text:  string
+  value: string
+  color: string
+}
+
+interface CognitiveProfile {
+  summary:            string
+  gemini_powered:     boolean
+  primary_activities: string[]
+  interests:          string[]
+  active_projects:    string[]
+  work_patterns:      { peak_period: string; top_apps: string[]; workflow_summary: string }
+  dominant_themes:    string[]
+  domain_scores:      IntelDomainScore[]
+  top_sources:        string[]
+  keywords:           string[]
+  memory_count:       number
+  confidence:         number
+  clusters:           IntelCluster[]
+  timeline:           TrendsTimeline
+  insights:           IntelInsight[]
+}
+
+interface TrendsTimeline {
+  daily:            IntelDay[]
+  this_week_count:  number
+  last_week_count:  number
+  wow_change:       string
+  trending_domains: IntelTrendDomain[]
+  best_day:         string | null
+  best_day_count:   number
+  best_day_label:   string
+  total_memories:   number
+  narrative?:       string
 }
 
 // Phase 10 — Video Intelligence types
@@ -1571,38 +1649,49 @@ function ChatBubble({ msg }: { msg: ChatMessage }) {
       {!isUser && !msg.streaming && msg.brain_mode && (
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingLeft: '2px' }}>
           <span style={{
-            color: msg.brain_mode === 'local_llm'
-              ? '#00ff88'
-              : msg.brain_mode === 'local_semantic'
-                ? '#00c8ff'
-                : '#2a4a6a',
+            color: msg.brain_mode === 'gemini_hybrid' || msg.brain_mode === 'remote_llm'
+              ? '#a78bfa'
+              : msg.brain_mode === 'local_llm'
+                ? '#00ff88'
+                : msg.brain_mode === 'local_semantic'
+                  ? '#00c8ff'
+                  : '#2a4a6a',
             fontSize: '9px',
             fontFamily: 'var(--font-geist-mono, monospace)',
             border: `1px solid ${
-              msg.brain_mode === 'local_llm'
-                ? '#00ff8833'
-                : msg.brain_mode === 'local_semantic'
-                  ? '#00c8ff33'
-                  : '#0e2040'
+              msg.brain_mode === 'gemini_hybrid' || msg.brain_mode === 'remote_llm'
+                ? '#a78bfa33'
+                : msg.brain_mode === 'local_llm'
+                  ? '#00ff8833'
+                  : msg.brain_mode === 'local_semantic'
+                    ? '#00c8ff33'
+                    : '#0e2040'
             }`,
             padding: '0 5px',
             borderRadius: '3px',
           }}>
-            {msg.brain_mode === 'local_llm'
-              ? '⬡ LLM'
-              : msg.brain_mode === 'local_semantic'
-                ? '⬡ Local Semantic'
-                : '⬡ rule-based'}
+            {msg.brain_mode === 'gemini_hybrid' || msg.brain_mode === 'remote_llm'
+              ? '⬡ Gemini'
+              : msg.brain_mode === 'local_llm'
+                ? '⬡ LLM'
+                : msg.brain_mode === 'local_semantic'
+                  ? '⬡ Local Semantic'
+                  : '⬡ rule-based'}
           </span>
-          {msg.query_used && (
-            <span style={{ color: '#1e3050', fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)' }}>
-              searched: <span style={{ color: '#00b4ff44' }}>{msg.query_used}</span>
-            </span>
-          )}
-          {msg.total_memories !== undefined && (
-            <span style={{ color: '#1e3050', fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)' }}>
-              {msg.total_memories} mem
-            </span>
+          {/* Search metadata — only shown for local search modes, not Gemini */}
+          {msg.brain_mode !== 'gemini_hybrid' && msg.brain_mode !== 'remote_llm' && (
+            <>
+              {msg.query_used && (
+                <span style={{ color: '#1e3050', fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                  searched: <span style={{ color: '#00b4ff44' }}>{msg.query_used}</span>
+                </span>
+              )}
+              {msg.total_memories !== undefined && (
+                <span style={{ color: '#1e3050', fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                  {msg.total_memories} mem
+                </span>
+              )}
+            </>
           )}
         </div>
       )}
@@ -2128,7 +2217,7 @@ export default function Dashboard() {
   const [error, setError]               = useState<string | null>(null)
 
   // ── Session state ───────────────────────────────────────
-  const [activeTab, setActiveTab]             = useState<'timeline' | 'sessions' | 'videos' | 'graph' | 'profile' | 'agent' | 'replay' | 'soul'>('timeline')
+  const [activeTab, setActiveTab]             = useState<'timeline' | 'sessions' | 'videos' | 'graph' | 'profile' | 'agent' | 'replay' | 'soul' | 'trends'>('timeline')
   const [sessions, setSessions]               = useState<Session[]>([])
   const [sessionsLoaded, setSessionsLoaded]   = useState(false)
   const [loadingSessions, setLoadingSessions] = useState(false)
@@ -2197,6 +2286,14 @@ export default function Dashboard() {
   const [loadingProfile, setLoadingProfile]   = useState(false)
   const [profileLoaded, setProfileLoaded]     = useState(false)
 
+  // ── Intelligence / Cognitive Profile (Phase 21) ───────────
+  const [cogProfile, setCogProfile]           = useState<CognitiveProfile | null>(null)
+  const [cogLoaded, setCogLoaded]             = useState(false)
+  const [loadingCog, setLoadingCog]           = useState(false)
+  const [trendsData, setTrendsData]           = useState<TrendsTimeline | null>(null)
+  const [trendsLoaded, setTrendsLoaded]       = useState(false)
+  const [loadingTrends, setLoadingTrends]     = useState(false)
+
   // ── Agent state ───────────────────────────────────────────
   const [agentActions, setAgentActions]       = useState<AgentAction[]>([])
   const [agentResult, setAgentResult]         = useState<AgentResult | null>(null)
@@ -2239,9 +2336,11 @@ export default function Dashboard() {
 
   // ── Phase 18: Brain Status ────────────────────────────────
   const [brainStatus, setBrainStatus]         = useState<BrainStatus | null>(null)
-  const [brainChatMsg, setBrainChatMsg]       = useState('')
-  const [brainChatAnswer, setBrainChatAnswer] = useState<string | null>(null)
+  const [brainChatMsg, setBrainChatMsg]         = useState('')
+  const [brainChatAnswer, setBrainChatAnswer]   = useState<string | null>(null)
   const [brainChatLoading, setBrainChatLoading] = useState(false)
+  const [brainChatNotice, setBrainChatNotice]   = useState<string | null>(null)
+  const [brainChatError, setBrainChatError]     = useState<string | null>(null)
 
   // ── Timeline ─────────────────────────────────────────────
   const fetchTimeline = useCallback(async () => {
@@ -2316,7 +2415,7 @@ export default function Dashboard() {
     }
   }
 
-  const switchTab = (tab: 'timeline' | 'sessions' | 'videos' | 'graph' | 'profile' | 'agent' | 'replay' | 'soul') => {
+  const switchTab = (tab: 'timeline' | 'sessions' | 'videos' | 'graph' | 'profile' | 'agent' | 'replay' | 'soul' | 'trends') => {
     setActiveTab(tab)
     setError(null)
     setActiveSession(null)
@@ -2327,6 +2426,8 @@ export default function Dashboard() {
     if (tab === 'videos')                      { fetchCameraStatus(); fetchMultiCameras(); fetchWorldState() }
     if (tab === 'graph'    && !graphLoaded)     fetchGraph()
     if (tab === 'profile'  && !profileLoaded)  fetchProfile()
+    if (tab === 'profile'  && !cogLoaded)      fetchCogProfile()
+    if (tab === 'trends'   && !trendsLoaded)   fetchTrends()
     if (tab === 'agent'    && !agentLoaded)     fetchAgentData()
     if (tab === 'soul'     && !soulLoaded)      fetchSoulData()
   }
@@ -2340,6 +2441,9 @@ export default function Dashboard() {
       setGraphLoaded(false); fetchGraph()
     } else if (activeTab === 'profile') {
       setProfileLoaded(false); fetchProfile()
+      setCogLoaded(false); fetchCogProfile()
+    } else if (activeTab === 'trends') {
+      setTrendsLoaded(false); fetchTrends()
     } else {
       setSessionsLoaded(false); setActiveSession(null); fetchSessions()
     }
@@ -2664,6 +2768,33 @@ export default function Dashboard() {
     }
   }, [])
 
+  // ── Cognitive Profile (Phase 21) ──────────────────────────
+  const fetchCogProfile = useCallback(async () => {
+    setLoadingCog(true)
+    try {
+      const res = await fetch(`${API_BASE}/intelligence/profile`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data: CognitiveProfile = await res.json()
+      setCogProfile(data)
+      setCogLoaded(true)
+    } catch { /* non-critical */ } finally {
+      setLoadingCog(false)
+    }
+  }, [])
+
+  const fetchTrends = useCallback(async () => {
+    setLoadingTrends(true)
+    try {
+      const res = await fetch(`${API_BASE}/intelligence/timeline`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data: TrendsTimeline = await res.json()
+      setTrendsData(data)
+      setTrendsLoaded(true)
+    } catch { /* non-critical */ } finally {
+      setLoadingTrends(false)
+    }
+  }, [])
+
   const dismissSuggestion = async (id: string) => {
     try {
       await fetch(`${API_BASE}/suggestions/${id}/dismiss`, { method: 'POST' })
@@ -2864,6 +2995,8 @@ export default function Dashboard() {
     if (!brainChatMsg.trim()) return
     setBrainChatLoading(true)
     setBrainChatAnswer(null)
+    setBrainChatNotice(null)
+    setBrainChatError(null)
     try {
       const res = await fetch(`${API_BASE}/brain/chat`, {
         method: 'POST',
@@ -2873,8 +3006,20 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json()
         setBrainChatAnswer(data.answer ?? '')
+        if (data.status === 'quota_exceeded' || data.fallback_used) {
+          const retry = data.retry_after_seconds
+            ? ` · retry in ${data.retry_after_seconds}s`
+            : ''
+          setBrainChatNotice(`Gemini limited · local fallback active${retry}`)
+        }
+        // Sync orb immediately after a chat response (don't wait for 30s poll)
+        fetchBrainStatus()
+      } else {
+        setBrainChatError('The brain is not responding. Make sure the backend is running.')
       }
-    } catch { /* non-critical */ } finally {
+    } catch {
+      setBrainChatError('Cannot reach the backend on port 8010. Is it running?')
+    } finally {
       setBrainChatLoading(false)
     }
   }
@@ -2883,6 +3028,11 @@ export default function Dashboard() {
   useEffect(() => { fetchTimeline() }, [fetchTimeline])
   useEffect(() => { fetchSuggestions() }, [fetchSuggestions])
   useEffect(() => { fetchBrainStatus() }, [fetchBrainStatus])
+  // Poll brain status every 30 s to keep the Cognitive Core Orb in sync
+  useEffect(() => {
+    const id = setInterval(() => { fetchBrainStatus() }, 30_000)
+    return () => clearInterval(id)
+  }, [fetchBrainStatus])
 
   const isSearch = searchResults !== null
   const count = isSearch ? searchResults!.length : items.length
@@ -2938,24 +3088,56 @@ export default function Dashboard() {
           >
             ↓ Sessions
           </a>
-          {/* Brain Status badge */}
-          {brainStatus && (
-            <span
-              title={`Brain provider: ${brainStatus.brain_provider}${brainStatus.fallback_used ? ' (fallback to local_semantic)' : ''}`}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                fontSize: '9px', padding: '3px 8px', borderRadius: '4px',
-                fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.08em',
-                background: brainStatus.llm_active ? 'rgba(139,92,246,0.12)' : 'rgba(255,255,255,0.04)',
-                border: `1px solid ${brainStatus.llm_active ? 'rgba(139,92,246,0.35)' : 'rgba(255,255,255,0.1)'}`,
-                color: brainStatus.llm_active ? 'var(--violet)' : 'var(--text-4)',
-                cursor: 'default',
-              }}
-            >
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: brainStatus.llm_active ? 'var(--violet)' : 'var(--text-4)' }} />
-              {brainStatus.llm_active ? brainStatus.brain_provider.toUpperCase() : 'LOCAL SEMANTIC'}
-            </span>
-          )}
+          {/* ── Cognitive Core Orb (Phase 21) ── */}
+          {(() => {
+            // Derive orb state: green=LLM live, yellow=fallback/quota, red=lockdown/offline
+            const isLockdown = brainStatus?.lockdown === true
+            const orbColor  = !brainStatus || isLockdown ? '#ef4444'
+                            : brainStatus.llm_active     ? '#22c55e'
+                            : '#eab308'
+            const orbLabel  = !brainStatus                          ? 'OFFLINE'
+                            : isLockdown                            ? 'LOCKED'
+                            : brainStatus.llm_active                ? brainStatus.brain_provider.toUpperCase()
+                            : brainStatus.quota_limited             ? 'LIMITED'
+                            : 'LOCAL'
+            const orbTip    = !brainStatus
+                            ? 'Cognitive Core: backend unreachable'
+                            : isLockdown
+                            ? 'Cognitive Core: system lockdown active'
+                            : brainStatus.quota_limited
+                            ? `Cognitive Core · Gemini limited · local fallback active` +
+                              (brainStatus.retry_after_seconds ? ` · retry in ${brainStatus.retry_after_seconds}s` : '')
+                            : `Cognitive Core · ${brainStatus.brain_provider} · ${brainStatus.mode}` +
+                              (brainStatus.fallback_used ? ' (fallback)' : '') +
+                              (brainStatus.model ? ` · ${brainStatus.model}` : '')
+            return (
+              <div
+                title={orbTip}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'default', userSelect: 'none' as const }}
+              >
+                <style>{`@keyframes orb-pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.55);opacity:.15}}`}</style>
+                {/* Orb: pulsing ring + solid core */}
+                <div style={{ position: 'relative', width: 20, height: 20, flexShrink: 0 }}>
+                  <div style={{
+                    position: 'absolute', inset: 0, borderRadius: '50%',
+                    background: orbColor, opacity: 0.22,
+                    animation: 'orb-pulse 2.6s ease-in-out infinite',
+                  }} />
+                  <div style={{
+                    position: 'absolute', inset: '5px', borderRadius: '50%',
+                    background: orbColor,
+                    boxShadow: `0 0 7px 2px ${orbColor}55`,
+                  }} />
+                </div>
+                <span style={{
+                  fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)',
+                  letterSpacing: '0.12em', color: orbColor, fontWeight: 700,
+                }}>
+                  {orbLabel}
+                </span>
+              </div>
+            )
+          })()}
           {isSearch && (
             <span className={`chip ${semanticMode ? 'chip-purple' : 'chip-ghost'}`} style={{ fontSize: '10px' }}>
               {semanticMode ? '⬡ semantic' : '⬡ keyword'}
@@ -3140,6 +3322,7 @@ export default function Dashboard() {
           { id: 'soul',     label: '◉ Soul' },
           { id: 'graph',    label: '◎ Graph' },
           { id: 'profile',  label: '◉ Profile' },
+          { id: 'trends',   label: '◷ Trends' },
           { id: 'agent',    label: '⬡ Agent' },
         ] as const).map(({ id: tab, label }) => (
           <button
@@ -3331,9 +3514,228 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Trends tab — Phase 21 */}
+        {activeTab === 'trends' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {loadingTrends ? (
+              <div className="empty-state">
+                <span className="spin-ring">⟳</span>
+                <div className="empty-title" style={{ marginTop: '16px' }}>ANALYSING TRENDS…</div>
+              </div>
+            ) : !trendsData ? (
+              <div className="empty-state">
+                <div className="empty-icon">◷</div>
+                <button onClick={fetchTrends} className="btn-outline">Load Timeline Intelligence</button>
+              </div>
+            ) : (
+              <>
+                {/* Narrative */}
+                {trendsData.narrative && (
+                  <div style={{ background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.14)', borderRadius: '10px', padding: '14px 18px' }}>
+                    <div style={{ color: 'var(--cyan)', fontSize: '10px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em', marginBottom: '8px' }}>◷ TIMELINE ANALYSIS</div>
+                    <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7, margin: 0 }}>{trendsData.narrative}</p>
+                  </div>
+                )}
+
+                {/* Week summary cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  {([
+                    { label: 'THIS WEEK', value: trendsData.this_week_count, sub: trendsData.wow_change },
+                    { label: 'LAST WEEK', value: trendsData.last_week_count, sub: 'prev 7 days' },
+                    { label: 'ALL TIME',  value: trendsData.total_memories,  sub: 'total memories' },
+                  ] as const).map(({ label, value, sub }) => (
+                    <div key={label} className="stat-card" style={{ textAlign: 'center' as const }}>
+                      <div style={{ color: 'var(--text-4)', fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em', marginBottom: '6px' }}>{label}</div>
+                      <div style={{ color: 'var(--text-1)', fontSize: '26px', fontWeight: 700, fontFamily: 'var(--font-geist-mono, monospace)' }}>{value}</div>
+                      <div style={{ color: 'var(--text-4)', fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)', marginTop: '4px' }}>{sub}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 14-day activity bar chart */}
+                {trendsData.daily.length > 0 && (() => {
+                  const maxCnt = Math.max(...trendsData.daily.map(d => d.count), 1)
+                  return (
+                    <div className="stat-card">
+                      <div className="section-title" style={{ marginBottom: '14px' }}>14-Day Activity</div>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '72px' }}>
+                        {trendsData.daily.map((day, i) => (
+                          <div key={i} title={`${day.date}: ${day.count}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}>
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', width: '100%' }}>
+                              <div style={{
+                                width: '100%',
+                                height: day.count > 0 ? `${Math.max(day.count / maxCnt * 100, 10)}%` : '2px',
+                                background: day.count > 0 ? 'rgba(0,180,255,0.55)' : 'rgba(255,255,255,0.04)',
+                                borderRadius: '2px 2px 0 0',
+                                boxShadow: day.count > 0 ? '0 0 6px rgba(0,180,255,0.25)' : 'none',
+                              }} />
+                            </div>
+                            {i % 2 === 0 && (
+                              <div style={{ color: 'var(--text-4)', fontSize: '7px', fontFamily: 'var(--font-geist-mono, monospace)', marginTop: '3px' }}>{day.label}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Trending domains */}
+                {trendsData.trending_domains.length > 0 && (
+                  <div className="stat-card">
+                    <div className="section-title" style={{ marginBottom: '12px' }}>Domain Trends (this week vs last)</div>
+                    {trendsData.trending_domains.map(td => (
+                      <div key={td.domain} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '13px', color: td.trend === 'rising' ? '#22c55e' : td.trend === 'falling' ? '#ef4444' : '#eab308', flexShrink: 0 }}>
+                          {td.trend === 'rising' ? '↑' : td.trend === 'falling' ? '↓' : '→'}
+                        </span>
+                        <span style={{ flex: 1, fontSize: '12px', color: td.color }}>{td.domain}</span>
+                        <span style={{ fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)', color: td.trend === 'rising' ? '#22c55e' : td.trend === 'falling' ? '#ef4444' : 'var(--text-4)' }}>
+                          {td.delta}
+                        </span>
+                        <span style={{ fontSize: '9px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', minWidth: '22px', textAlign: 'right' as const }}>
+                          {td.this_week}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Memory clusters from daily domain data */}
+                {trendsData.daily.some(d => Object.keys(d.domains).length > 0) && (() => {
+                  const totals: Record<string, number> = {}
+                  trendsData.daily.forEach(day => {
+                    Object.entries(day.domains).forEach(([dom, cnt]) => {
+                      totals[dom] = (totals[dom] || 0) + (cnt as number)
+                    })
+                  })
+                  const total = Object.values(totals).reduce((a, b) => a + b, 0) || 1
+                  const sorted = Object.entries(totals).sort(([, a], [, b]) => b - a)
+                  return (
+                    <div className="stat-card">
+                      <div className="section-title" style={{ marginBottom: '12px' }}>Memory Clusters (14-day window)</div>
+                      {sorted.map(([domain, count]) => {
+                        const pct = Math.round((count as number) / total * 100)
+                        return (
+                          <div key={domain} style={{ marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                              <span style={{ fontSize: '11px', color: 'var(--text-2)' }}>{domain}</span>
+                              <span style={{ fontSize: '9px', fontFamily: 'var(--font-geist-mono, monospace)', color: 'var(--text-4)' }}>{count} · {pct}%</span>
+                            </div>
+                            <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
+                              <div style={{ height: '100%', width: `${pct}%`, background: '#00b4ff', opacity: 0.55, borderRadius: '2px' }} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
+              </>
+            )}
+          </div>
+        )}
+
         {/* Profile tab */}
         {activeTab === 'profile' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* ── Cognitive Profile (Phase 21) ── */}
+            {loadingCog ? (
+              <div style={{ padding: '14px 18px', display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.14)', borderRadius: '10px' }}>
+                <span style={{ color: 'var(--violet)', fontSize: '16px', animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</span>
+                <span style={{ color: 'var(--text-3)', fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)' }}>SYNTHESISING COGNITIVE PROFILE…</span>
+              </div>
+            ) : cogProfile ? (
+              <>
+                {/* Gemini summary */}
+                <div style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.14)', borderRadius: '10px', padding: '16px 18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' as const }}>
+                    <span style={{ color: 'var(--violet)', fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)', letterSpacing: '0.1em' }}>◈ COGNITIVE PROFILE</span>
+                    {cogProfile.gemini_powered && (
+                      <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontFamily: 'var(--font-geist-mono, monospace)' }}>⬡ Gemini</span>
+                    )}
+                    <span style={{ fontSize: '9px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', marginLeft: 'auto' }}>
+                      {Math.round(cogProfile.confidence * 100)}% confidence · {cogProfile.memory_count} memories
+                    </span>
+                  </div>
+                  <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.75, margin: 0 }}>{cogProfile.summary}</p>
+                </div>
+
+                {/* Domain activity bars + active projects */}
+                {cogProfile.domain_scores.length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="stat-card">
+                      <div className="section-title" style={{ marginBottom: '12px' }}>Primary Activities</div>
+                      {cogProfile.domain_scores.slice(0, 5).map(ds => (
+                        <div key={ds.domain} style={{ marginBottom: '9px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                            <span style={{ fontSize: '11px', color: ds.color }}>{ds.domain}</span>
+                            <span style={{ fontSize: '9px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)' }}>{ds.percentage}%</span>
+                          </div>
+                          <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
+                            <div style={{ height: '100%', width: `${ds.percentage}%`, background: ds.color, borderRadius: '2px', boxShadow: `0 0 5px ${ds.color}44` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="stat-card">
+                      <div className="section-title" style={{ marginBottom: '12px' }}>Active Projects</div>
+                      {cogProfile.active_projects.map(p => (
+                        <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '7px' }}>
+                          <span style={{ color: 'var(--violet)', fontSize: '10px' }}>◈</span>
+                          <span style={{ fontSize: '12px', color: 'var(--text-1)' }}>{p}</span>
+                        </div>
+                      ))}
+                      {cogProfile.keywords.length > 0 && (
+                        <div style={{ marginTop: '10px', display: 'flex', gap: '5px', flexWrap: 'wrap' as const }}>
+                          {cogProfile.keywords.slice(0, 6).map(kw => (
+                            <span key={kw} className="chip chip-purple" style={{ fontSize: '9px' }}>{kw}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Proactive insights */}
+                {cogProfile.insights.length > 0 && (
+                  <div>
+                    <div className="section-title" style={{ marginBottom: '10px' }}>Proactive Insights</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {cogProfile.insights.map((ins, i) => (
+                        <div key={i} style={{
+                          padding: '10px 14px',
+                          background: `${ins.color}0a`,
+                          border: `1px solid ${ins.color}22`,
+                          borderRadius: '8px',
+                          display: 'flex',
+                          gap: '12px',
+                          alignItems: 'flex-start',
+                        }}>
+                          <span style={{ color: ins.color, fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>◉</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ color: 'var(--text-1)', fontSize: '12px', fontWeight: 600, marginBottom: '2px' }}>{ins.title}</div>
+                            <div style={{ color: 'var(--text-3)', fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)', lineHeight: 1.5 }}>{ins.text}</div>
+                          </div>
+                          {ins.value && (
+                            <span style={{ color: ins.color, fontSize: '11px', fontFamily: 'var(--font-geist-mono, monospace)', flexShrink: 0, fontWeight: 700 }}>{ins.value}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <button onClick={fetchCogProfile} className="btn-outline" style={{ alignSelf: 'flex-start' }}>Generate Cognitive Profile</button>
+            )}
+
+            {/* divider */}
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)' }} />
+
+            {/* ── Existing behavioural profile below ── */}
             {loadingProfile ? (
               <div className="empty-state">
                 <span className="spin-ring">⟳</span>
@@ -4996,19 +5398,32 @@ export default function Dashboard() {
               {brainStatus && (
                 <span style={{
                   fontSize: '9px', padding: '2px 7px', borderRadius: '4px',
-                  background: brainStatus.llm_active ? 'rgba(139,92,246,0.12)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${brainStatus.llm_active ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                  color: brainStatus.llm_active ? 'var(--violet)' : 'var(--text-4)',
+                  background: brainStatus.llm_active
+                    ? 'rgba(139,92,246,0.12)'
+                    : brainStatus.quota_limited
+                    ? 'rgba(234,179,8,0.08)'
+                    : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${brainStatus.llm_active
+                    ? 'rgba(139,92,246,0.3)'
+                    : brainStatus.quota_limited
+                    ? 'rgba(234,179,8,0.25)'
+                    : 'rgba(255,255,255,0.08)'}`,
+                  color: brainStatus.llm_active
+                    ? 'var(--violet)'
+                    : brainStatus.quota_limited
+                    ? '#eab308'
+                    : 'var(--text-4)',
                   fontFamily: 'var(--font-geist-mono, monospace)',
                 }}>
-                  {brainStatus.brain_provider} · {brainStatus.mode}
-                  {brainStatus.fallback_used && ' (fallback)'}
+                  {brainStatus.quota_limited
+                    ? `Gemini limited · local fallback active${brainStatus.retry_after_seconds ? ` · retry ${brainStatus.retry_after_seconds}s` : ''}`
+                    : `${brainStatus.brain_provider} · ${brainStatus.mode}${brainStatus.fallback_used ? ' (fallback)' : ''}`}
                 </span>
               )}
               <button onClick={fetchBrainStatus} className="btn-ghost" style={{ fontSize: '9px', padding: '2px 8px', marginLeft: 'auto' }}>↺ Status</button>
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--text-4)', fontFamily: 'var(--font-geist-mono, monospace)', marginBottom: '10px' }}>
-              Ask anything about your memories. Default: local_semantic (no LLM required). Optional: set BRAIN_PROVIDER=ollama or lmstudio in .env.
+            <div style={{ fontSize: '12px', color: 'var(--text-3)', marginBottom: '10px', lineHeight: 1.5 }}>
+              Ask anything — what you worked on, what you saw, who you spoke to.
             </div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <input
@@ -5029,6 +5444,16 @@ export default function Dashboard() {
             {brainChatAnswer && (
               <div style={{ padding: '12px 14px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '8px', fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.7, fontFamily: 'var(--font-geist-mono, monospace)' }}>
                 {brainChatAnswer}
+              </div>
+            )}
+            {brainChatNotice && (
+              <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.22)', borderRadius: '6px', fontSize: '11px', color: '#eab308', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                {brainChatNotice}
+              </div>
+            )}
+            {brainChatError && (
+              <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.22)', borderRadius: '6px', fontSize: '11px', color: '#ef4444', fontFamily: 'var(--font-geist-mono, monospace)' }}>
+                {brainChatError}
               </div>
             )}
           </div>
