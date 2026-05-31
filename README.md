@@ -20,7 +20,8 @@
 [![Gemini](https://img.shields.io/badge/Gemini-2.0%20Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://aistudio.google.com/)
 [![Platform](https://img.shields.io/badge/platform-Windows%2011-0078D6?style=flat-square&logo=windows&logoColor=white)](https://www.microsoft.com/windows)
 [![Local First](https://img.shields.io/badge/local--first-always%20works-10D984?style=flat-square)](#privacy)
-[![Phase](https://img.shields.io/badge/phase-22%20%E2%80%94%20Identity%20Engine-8B5CF6?style=flat-square)](#roadmap)
+[![Phase](https://img.shields.io/badge/phase-25%20%E2%80%94%20Release%20Candidate-10D984?style=flat-square)](#roadmap)
+[![Version](https://img.shields.io/badge/version-v0.25.0%20RC-10D984?style=flat-square)](#release-notes)
 [![License](https://img.shields.io/badge/license-MIT-F59E0B?style=flat-square)](LICENSE)
 
 <br/>
@@ -36,6 +37,21 @@
 > **EIDOLON OS** is an open-source, Windows-native AI cognitive operating system that captures everything you do — screenshots, documents, audio, video, camera feeds — and makes it all **searchable, replayable, and intelligently reasoned**. Runs fully offline by default. Optionally upgrades to **Google Gemini** for natural-language synthesis and cognitive profile generation. Zero cloud lock-in. Everything lives on your machine.
 
 <br/>
+
+---
+
+## What's New in v0.25.0 RC — Release Candidate
+
+Phase 25 prepares EIDOLON OS for final competition submission:
+
+| Feature | Description |
+|---------|-------------|
+| **RC Banner** | "EIDOLON OS v0.25.0 RC — Competition Ready" banner with dismissible × and About button |
+| **Footer Status Strip** | Fixed footer: live memory count, session count, Gemini status, vision status, local-first indicator |
+| **About Dialog** | Full project summary, key technologies, privacy architecture, local-first philosophy |
+| **Judge Quick Facts** | 7 capability chips in the Timeline tab with hover descriptions (Local AI, Vision, Voice, PDF, Memory Graph, Identity Engine, Gemini Hybrid) |
+| **RELEASE_NOTES.md** | Full version history from v0.20.0 → v0.25.0 |
+| **FINAL_CHECKLIST.md** | All 25 phases marked complete |
 
 ---
 
@@ -453,9 +469,10 @@ Full API reference: http://127.0.0.1:8010/docs
 |-------|---------|--------|
 | 1–20 | Core OS — memory, search, vision, voice, video, soul, agent, brain | ✅ Shipped |
 | 21 | Gemini Hybrid — cloud AI layer, profile intelligence, trends, reasoning | ✅ Shipped |
-| **22** | **Identity Engine** — project detection, goal inference, "Who am I?", identity synthesis | ✅ **Shipped** |
-| 23 | Submission Pack + Desktop Shell — Tauri wrapper, system tray | 🔨 Next |
-| 24 | Memory Timeline 2.0 — infinite scroll, heat-map, day-view | 📋 Planned |
+| 22 | Identity Engine — project detection, goal inference, "Who am I?", identity synthesis | ✅ Shipped |
+| 23 | Submission Pack — README, architecture, demo script, judge walkthrough | ✅ Shipped |
+| 24 | Demo Polish — judge UX, chips, walkthrough card, wording | ✅ Shipped |
+| **25** | **Release Candidate** — RC banner, footer strip, About dialog, Quick Facts | ✅ **Shipped** |
 | 24 | Smart Recall — context injection, idle nudges, daily digest email | 📋 Planned |
 | 25 | Mobile Companion — React Native, quick voice capture | 📋 Planned |
 | 26 | Knowledge Graph UI — visual node explorer, export GraphML | 📋 Planned |
@@ -543,6 +560,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 **Built local. Runs offline. Thinks with Gemini.**
 
-*EIDOLON OS — Phase 22 · Identity Engine · Google AI First Challenge 2026*
+*EIDOLON OS v0.25.0 RC — All 25 Phases Complete · Google AI First Challenge 2026*
 
 </div>
